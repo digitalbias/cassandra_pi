@@ -80,7 +80,35 @@
     - name: set apache-cassandra service to autostart
       service: name={{service_name}} enabled=yes state=stopped
 
+- hosts: nodes
+  remote_user: pi
+  become: yes
+  become_method: sudo
+  vars:
+    cassandra: apache-cassandra-{{ cassandra_version }}
+    seeds: "{%- for host in groups.seeds -%} {{ host }} {%if not loop.last %},{%- endif -%} {%- endfor -%}"
+  tags:
+    - install_cassandra_service
+  tasks:
+    - name: install {{service_name}} service 
+      template: src=config/apache-cassandra dest=/etc/systemd/system/multi-user.target.wants/{{service_name}}.service
 
+    - name: change permissions for cassandra service script
+      command: chmod +x /etc/systemd/system/multi-user.target.wants/{{service_name}}.service
+
+    - file: path=/var/run/cassandra state=directory mode=0755 owner=cassandra group=cassandra
+    - file: path=/var/log/cassandra state=directory mode=0755 owner=cassandra group=cassandra
+    - file: path=/var/lib/cassandra state=directory mode=0755 owner=cassandra group=cassandra
+      
+    - name: reload systemd daemon
+      command: systemctl daemon-reload
+      notify:
+      - enable {{service_name}} service
+
+  handlers:
+    - name: enable {{service_name}} service
+      service: name=cassandra enabled=yes state=stopped
+      
 - hosts: nodes
   remote_user: root
   gather_facts: false
