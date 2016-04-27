@@ -7,7 +7,7 @@ jdk_download_location: http://download.oracle.com/otn-pub/java/jdk/8u33-b05/{{ j
 jdk_home: /opt/jdk
 
 cassandra_version: 2.2.5
-cluster_name: neKST Cluster
+cluster_name: Test Cluster
 cassandra_home: /opt/cassandra
 service_name: cassandra
 service_pid: /var/run/cassandra/pid
