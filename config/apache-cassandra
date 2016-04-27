@@ -1,34 +1,18 @@
-#!/bin/bash
-# /etc/init.d/apache-cassandra
+[Unit]
+Description=Apache Cassandra Service
+After=syslog.target network.target
 
-### BEGIN INIT INFO
-# Provides:          apache-cassandra
-# Required-Start:    $remote_fs $syslog
-# Required-Stop:     $remote_fs $syslog
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: apache cassandra initscript
-# Description:       This service is used to manage apache cassandra
-### END INIT INFO
-NAME="{{ service }}"
-PID="/var/run/$NAME"
-export JAVA_HOME={{ jdk_home }}
+[Service]
+Type=forking
+WorkingDirectory=/home/cassandra
+User={{ cassandra_user }}
+PermissionsStartOnly=true
+ExecStart=
+ExecStart=/bin/sh -c '/opt/apache-cassandra/bin/cassandra -p "{{service_pid}}" >>/var/log/{{service_name}}/system.log 2>&1'
+#ExecStart=/opt/apache-cassandra/bin/cassandra -p "{{service_pid}}" >>/var/log/{{service_name}}/system.log 2>&1
+#RestartSec=5
+#Restart=on-failure
+PIDFile=/var/run/cassandra/pid
 
-case "$1" in 
-    start)
-        echo "Starting apache cassandra"
-        /opt/$NAME/bin/cassandra -p "$PID" >>var/log/$NAME.log 2>&1
-        ;;
-    stop)
-        if [ -f "$PID" ]; then
-          echo "Stopping apache cassandra"
-          kill `cat /var/run/$NAME`
-        fi
-        ;;  
-    *)
-        echo "Usage: /etc/init.d/$NAME start|stop"
-        exit 1
-        ;;
-esac
-
-exit 0
+[Install]
+WantedBy=multi-user.target
