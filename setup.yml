@@ -21,7 +21,7 @@
       become: yes
       become_method: sudo
 
-    - name: Add JAVA_HOME environment variable
+    - name: add JAVA_HOME environment variable
       lineinfile: dest=/etc/profile line="export JAVA_HOME={{jdk_home}}" state=present
       become: yes
       become_method: sudo
@@ -59,7 +59,7 @@
     - install_cassandra
   tasks:
 
-    - name: Check if cassandra package exists
+    - name: check if cassandra package exists
       local_action: stat path=/tmp/apache-cassandra-{{ cassandra_version }}-bin.tar.gz
       register: cassandra_file
 
@@ -81,7 +81,7 @@
       become: yes
       become_method: sudo
 
-    - name: Change configuration
+    - name: change configuration
       become: yes
       become_method: sudo
       lineinfile: dest={{ cassandra_home }}/conf/cassandra.yaml regexp="{{ item.old }}" line="{{ item.new }}" state="present" backrefs=yes
@@ -92,7 +92,7 @@
         - { old: "^rpc_address: localhost", new: "rpc_address: {{  ansible_eth0.ipv4.address }}" }
 
     - name: change directory permissions
-      command: chown -Rf {{ ansible_user }}:{{ ansible_user }} {{ cassandra_home }}
+      command: chown -Rf {{ cassandra_user }}:{{ cassandra_user }} {{ cassandra_home }}
       become: yes
       become_method: sudo
 
@@ -126,9 +126,9 @@
     - name: change permissions for cassandra service script
       command: chmod +x /etc/systemd/system/multi-user.target.wants/{{ service_name }}.service
 
-    - file: path=/var/run/cassandra state=directory mode=0755 owner=cassandra group=cassandra
-    - file: path=/var/log/cassandra state=directory mode=0755 owner=cassandra group=cassandra
-    - file: path=/var/lib/cassandra state=directory mode=0755 owner=cassandra group=cassandra
+    - file: path=/var/run/cassandra state=directory mode=0755 owner={{ cassandra_user }} group={{ cassandra_user }}
+    - file: path=/var/log/cassandra state=directory mode=0755 owner={{ cassandra_user }} group={{ cassandra_user }}
+    - file: path=/var/lib/cassandra state=directory mode=0755 owner={{ cassandra_user }} group={{ cassandra_user }}
 
     - name: reload systemd daemon
       command: systemctl daemon-reload
