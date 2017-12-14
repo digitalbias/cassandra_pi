@@ -1,5 +1,5 @@
 ---
-ansible_user: pi
+ansible_user: pirate
 
 jdk_version: 1.8.0_151
 jdk_file: jdk-8u151-linux-arm32-vfp-hflt.tar.gz
@@ -11,5 +11,4 @@ cassandra_version: 3.11.1
 cluster_name: InterimCluster
 cassandra_home: /opt/cassandra
 service_name: cassandra
-
-remote_user: pirate
+cassandra_user: pirate

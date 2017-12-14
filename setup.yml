@@ -1,6 +1,5 @@
 ---
 - hosts: nodes
-  remote_user: "{{ remote_user }}"
   gather_facts: false
   tags:
     - install_jdk
@@ -33,7 +32,6 @@
       become_method: sudo
 
 - hosts: nodes
-  remote_user: "{{ remote_user }}"
   gather_facts: false
   tags:
     - remove_jdk
@@ -54,7 +52,6 @@
       become_method: sudo
 
 - hosts: nodes
-  remote_user: "{{ remote_user }}"
   vars:
     cassandra: apache-cassandra-{{ cassandra_version }}
     seeds: "{%- for host in groups.seeds -%} {{ host }} {%if not loop.last %},{%- endif -%} {%- endfor -%}"
@@ -80,14 +77,14 @@
       become_method: sudo
 
     - name: rename apache-cassandra directory-prefix
-      command: mv /opt/{{ cassandra }} {{cassandra_home}}
+      command: mv /opt/{{ cassandra }} {{ cassandra_home }}
       become: yes
       become_method: sudo
 
     - name: Change configuration
       become: yes
       become_method: sudo
-      lineinfile: dest={{cassandra_home}}/conf/cassandra.yaml regexp="{{ item.old }}" line="{{ item.new }}" state="present" backrefs=yes
+      lineinfile: dest={{ cassandra_home }}/conf/cassandra.yaml regexp="{{ item.old }}" line="{{ item.new }}" state="present" backrefs=yes
       with_items:
         - { old: "^cluster_name", new: "cluster_name: '{{cluster_name}}'" }
         - { old: '          - seeds:', new: '          - seeds:  "{{ seeds }}"' }
@@ -95,27 +92,26 @@
         - { old: "^rpc_address: localhost", new: "rpc_address: {{  ansible_eth0.ipv4.address }}" }
 
     - name: change directory permissions
-      command: chown -Rf {{ remote_user }}:{{ remote_user }} {{ cassandra_home }}
+      command: chown -Rf {{ ansible_user }}:{{ ansible_user }} {{ cassandra_home }}
       become: yes
       become_method: sudo
 
     - name: install cassandra service
-      template: src=config/apache-cassandra dest=/etc/init.d/{{service_name}}
+      template: src=config/apache-cassandra dest=/etc/init.d/{{ service_name }}
       become: yes
       become_method: sudo
 
     - name: change permissions for cassandra service script
-      command: chmod +x /etc/init.d/{{service_name}}
+      command: chmod +x /etc/init.d/{{ service_name }}
       become: yes
       become_method: sudo
 
     - name: set apache-cassandra service to autostart
-      service: name={{service_name}} enabled=yes state=stopped
+      service: name={{ service_name }} enabled=yes state=stopped
       become: yes
       become_method: sudo
 
 - hosts: nodes
-  remote_user: pi
   become: yes
   become_method: sudo
   vars:
@@ -124,43 +120,42 @@
   tags:
     - install_cassandra_service
   tasks:
-    - name: install {{service_name}} service 
-      template: src=config/apache-cassandra dest=/etc/systemd/system/multi-user.target.wants/{{service_name}}.service
+    - name: install {{ service_name }} service
+      template: src=config/apache-cassandra dest=/etc/systemd/system/multi-user.target.wants/{{ service_name }}.service
 
     - name: change permissions for cassandra service script
-      command: chmod +x /etc/systemd/system/multi-user.target.wants/{{service_name}}.service
+      command: chmod +x /etc/systemd/system/multi-user.target.wants/{{ service_name }}.service
 
     - file: path=/var/run/cassandra state=directory mode=0755 owner=cassandra group=cassandra
     - file: path=/var/log/cassandra state=directory mode=0755 owner=cassandra group=cassandra
     - file: path=/var/lib/cassandra state=directory mode=0755 owner=cassandra group=cassandra
-      
+
     - name: reload systemd daemon
       command: systemctl daemon-reload
       notify:
-      - enable {{service_name}} service
+      - enable {{ service_name }} service
 
   handlers:
-    - name: enable {{service_name}} service
+    - name: enable {{ service_name }} service
       service: name=cassandra enabled=yes state=stopped
-      
+
 - hosts: nodes
-  remote_user: "{{ remote_user }}"
   gather_facts: false
   tags:
     - remove_cassandra
   tasks:
     - name: stop apache-cassandra service
-      service: name={{service_name}} state=stopped enabled=no
+      service: name={{ service_name }} state=stopped enabled=no
       ignore_errors: yes
 
     - name: delete apache-cassandra service file
-      file: dest=/etc/init.d/{{service_name}} state=absent
+      file: dest=/etc/init.d/{{ service_name }} state=absent
       become: yes
       become_method: sudo
       ignore_errors: yes
 
     - name: delete apache-cassandra directory
-      file: dest={{cassandra_home}} state=absent
+      file: dest={{ cassandra_home }} state=absent
       become: yes
       become_method: sudo
       ignore_errors: yes
