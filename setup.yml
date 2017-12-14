@@ -1,53 +1,67 @@
 ---
 - hosts: nodes
-  remote_user: root
+  remote_user: "{{ remote_user }}"
   gather_facts: false
-  tags: 
+  tags:
     - install_jdk
   tasks:
     - name: fetch oracle jdk
       local_action: 'command wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" "{{ jdk_download_location }}" --directory-prefix=/tmp/'
-      run_once: true   
+      run_once: true
 
     - name: transfer jdk from ansible host to raspberrypi
       copy: src=/tmp/{{ jdk_file }} dest=/tmp/{{ jdk_file }}
 
     - name: unarchive jdk download
-      unarchive: copy=yes src=/tmp/{{ jdk_file }} dest=/opt 
+      unarchive: copy=yes src=/tmp/{{ jdk_file }} dest=/opt
+      become: yes
+      become_method: sudo
 
-    - name: rename jdk directory-prefix 
+    - name: rename jdk directory-prefix
       command: mv {{jdk_home}}{{ jdk_version }} {{jdk_home}}/
+      become: yes
+      become_method: sudo
 
     - name: Add JAVA_HOME environment variable
       lineinfile: dest=/etc/profile line="export JAVA_HOME={{jdk_home}}" state=present
+      become: yes
+      become_method: sudo
 
     - name: update PATH
       lineinfile: dest=/etc/profile line="export PATH=$PATH:$JAVA_HOME/bin" state=present
+      become: yes
+      become_method: sudo
 
 - hosts: nodes
-  remote_user: root    
+  remote_user: "{{ remote_user }}"
   gather_facts: false
   tags:
     - remove_jdk
   tasks:
     - name: remove jdk
       file: dest={{jdk_home}} state=absent
+      become: yes
+      become_method: sudo
 
     - name: remove JAVA_HOME
       lineinfile: dest=/etc/profile line="export JAVA_HOME={{jdk_home}}" state=absent
+      become: yes
+      become_method: sudo
 
     - name: remove JAVA_HOME/bin path
       lineinfile: dest=/etc/profile line="export PATH=$PATH:$JAVA_HOME/bin" state=absent
+      become: yes
+      become_method: sudo
 
 - hosts: nodes
-  remote_user: root  
+  remote_user: "{{ remote_user }}"
   vars:
     cassandra: apache-cassandra-{{ cassandra_version }}
     seeds: "{%- for host in groups.seeds -%} {{ host }} {%if not loop.last %},{%- endif -%} {%- endfor -%}"
   tags:
     - install_cassandra
-  tasks:  
-     
+  tasks:
+
     - name: Check if cassandra package exists
       local_action: stat path=/tmp/apache-cassandra-{{ cassandra_version }}-bin.tar.gz
       register: cassandra_file
@@ -57,32 +71,52 @@
       run_once: true
       when: cassandra_file.stat.exists != true
 
-    - name: unarchive cassandra download
-      unarchive: copy=yes src=/tmp/{{ cassandra }}-bin.tar.gz dest=/opt 
+    - name: transfer cassandra from ansible host to raspberrypi
+      copy: src=/tmp/apache-cassandra-{{ cassandra_version }}-bin.tar.gz dest=/tmp/apache-cassandra-{{ cassandra_version }}-bin.tar.gz
 
-    - name: rename apache-cassandra directory-prefix 
-      command: mv /opt/{{ cassandra }} {{cassandra_home}} 
+    - name: unarchive cassandra download
+      unarchive: copy=yes src=/tmp/{{ cassandra }}-bin.tar.gz dest=/opt
+      become: yes
+      become_method: sudo
+
+    - name: rename apache-cassandra directory-prefix
+      command: mv /opt/{{ cassandra }} {{cassandra_home}}
+      become: yes
+      become_method: sudo
 
     - name: Change configuration
+      become: yes
+      become_method: sudo
       lineinfile: dest={{cassandra_home}}/conf/cassandra.yaml regexp="{{ item.old }}" line="{{ item.new }}" state="present" backrefs=yes
-      with_items: 
-        - { old: "^cluster_name", new: "cluster_name: '{{cluster_name}}'" } 
-        - { old: '          - seeds:', new: '          - seeds:  \"{{ seeds }}\"' }
+      with_items:
+        - { old: "^cluster_name", new: "cluster_name: '{{cluster_name}}'" }
+        - { old: '          - seeds:', new: '          - seeds:  "{{ seeds }}"' }
         - { old: "^listen_address: localhost", new: "listen_address: {{  ansible_eth0.ipv4.address }}" }
-        - { old: "^rpc_address: localhost", new: "rpc_address: {{  ansible_eth0.ipv4.address }}" } 
+        - { old: "^rpc_address: localhost", new: "rpc_address: {{  ansible_eth0.ipv4.address }}" }
+
+    - name: change directory permissions
+      command: chown -Rf {{ remote_user }}:{{ remote_user }} {{ cassandra_home }}
+      become: yes
+      become_method: sudo
 
     - name: install cassandra service
       template: src=config/apache-cassandra dest=/etc/init.d/{{service_name}}
+      become: yes
+      become_method: sudo
 
     - name: change permissions for cassandra service script
       command: chmod +x /etc/init.d/{{service_name}}
+      become: yes
+      become_method: sudo
 
     - name: set apache-cassandra service to autostart
       service: name={{service_name}} enabled=yes state=stopped
+      become: yes
+      become_method: sudo
 
 
 - hosts: nodes
-  remote_user: root
+  remote_user: "{{ remote_user }}"
   gather_facts: false
   tags:
     - remove_cassandra
@@ -93,9 +127,13 @@
 
     - name: delete apache-cassandra service file
       file: dest=/etc/init.d/{{service_name}} state=absent
+      become: yes
+      become_method: sudo
       ignore_errors: yes
 
     - name: delete apache-cassandra directory
-      file: dest={{cassandra_home}} state=absent  
+      file: dest={{cassandra_home}} state=absent
+      become: yes
+      become_method: sudo
       ignore_errors: yes
- 
+

@@ -10,11 +10,11 @@
 # Short-Description: apache cassandra initscript
 # Description:       This service is used to manage apache cassandra
 ### END INIT INFO
-NAME="{{ service }}"
+NAME="{{ service_name }}"
 PID="/var/run/$NAME"
 export JAVA_HOME={{ jdk_home }}
 
-case "$1" in 
+case "$1" in
     start)
         echo "Starting apache cassandra"
         /opt/$NAME/bin/cassandra -p "$PID" >>var/log/$NAME.log 2>&1
@@ -24,7 +24,7 @@ case "$1" in
           echo "Stopping apache cassandra"
           kill `cat /var/run/$NAME`
         fi
-        ;;  
+        ;;
     *)
         echo "Usage: /etc/init.d/$NAME start|stop"
         exit 1
