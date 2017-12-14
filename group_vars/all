@@ -1,14 +1,15 @@
 ---
 ansible_user: pi
 
-jdk_version: 1.8.0_33
-jdk_file: jdk-8u33-linux-arm-vfp-hflt.tar.gz
-jdk_download_location: http://download.oracle.com/otn-pub/java/jdk/8u33-b05/{{ jdk_file }}
+jdk_version: 1.8.0_151
+jdk_file: jdk-8u151-linux-arm32-vfp-hflt.tar.gz
+license_hash: e758a0de34e24606bca991d704f6dcbf
+jdk_download_location: http://download.oracle.com/otn-pub/java/jdk/8u151-b12/{{ license_hash }}/{{ jdk_file }}
 jdk_home: /opt/jdk
 
-cassandra_version: 2.2.5
-cluster_name: Test Cluster
+cassandra_version: 3.11.1
+cluster_name: InterimCluster
 cassandra_home: /opt/cassandra
 service_name: cassandra
-service_pid: /var/run/cassandra/pid
-cassandra_user: cassandra
+
+remote_user: pirate
