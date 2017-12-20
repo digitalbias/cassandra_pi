@@ -14,3 +14,7 @@ service_name: cassandra
 cassandra_user: pirate
 cassandra_data_directory: /media/cassandra/data
 cassandra_log_directory: /media/cassandra/logs
+
+cassandra_mount_point: /media/cassandra
+external_disk: /dev/sda1
+file_system: ext2

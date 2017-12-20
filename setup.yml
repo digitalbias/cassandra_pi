@@ -163,3 +163,16 @@
       become_method: sudo
       ignore_errors: yes
 
+- hosts: nodes
+  become: yes
+  become_method: sudo
+  tags:
+    - update_fstab
+  tasks:
+    - name: create external mount point for log and data directories
+      mount:
+        path: {{ cassandra_mount_point }}
+        src: {{ external_disk }}
+        fstype: {{ file_system }}
+        opts: default
+        state: present

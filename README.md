@@ -1,4 +1,5 @@
-#Cassandra deployment on raspberry pi cluster#
+# Cassandra deployment on raspberry pi cluster, with external hard drive
+
 This ansible script installs cassandra on a cluster of raspberry pi's. The OS image from hypriot http://blog.hypriot.com/ has been installed on the authors cluster which does not have a copy of the jdk or python preinstalled. Hence the script also install's the jdk from oracle.
 
 For controlling multiple nodes it is recommended that passwordless ssh login is used. Instructions can be found here http://www.thegeekstuff.com/2008/11/3-steps-to-perform-ssh-login-without-password-using-ssh-keygen-ssh-copy-id/
@@ -40,7 +41,22 @@ To remove only cassandra then type the following
 ansible-playbook -i production --tags=remove_cassandra setup.yml
 ```
 
-User configurable variables are stored in /group_vars/all
+There is a separate tag for installing cassandra as a service. To install the service type the following
+
+```bash
+ansible-playbook -i production --tags=install_cassandra_service setup.yml
+```
+
+
+To setup the external hard drive type the following
+```bash
+ansible-playbook -i production --tags=update_fstab setup.yml
+```
+
+The hard drive setup doesn't quite follow the cassandra recommendations since they suggest you have the log files and the data files on different hardware, but this gives a general idea and if somebody wants to take it to the next level they are welcome to.
+
+
+## User configurable variables are stored in /group_vars/all
 
 The cassandra nodes are listed in /production in the appropriate groups. Any changes to reflect your node configuration need to be made there.
 
@@ -56,7 +72,7 @@ type the folowing to see if the node has started and joined the cluster
 /opt/cassandra/bin/nodetool status
 ```
 
-Then you will see 
+Then you will see
 
 ```bash
 Datacenter: datacenter1
@@ -66,7 +82,7 @@ Status=Up/Down
 --  Address      Load       Tokens  Owns (effective)  Host ID                               Rack
 UN  172.16.2.51  194.76 KB  256     25.1%             babe1a04-cabd-4a5d-b80e-e208dafcb606  rack1
 ```
-Start the second seed node followed by 
+Start the second seed node followed by
 
 ```bash
 /opt/cassandra/bin/nodetool status
