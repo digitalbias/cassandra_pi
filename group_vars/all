@@ -12,3 +12,5 @@ cluster_name: InterimCluster
 cassandra_home: /opt/cassandra
 service_name: cassandra
 cassandra_user: pirate
+cassandra_data_directory: /media/cassandra/data
+cassandra_log_directory: /media/cassandra/logs

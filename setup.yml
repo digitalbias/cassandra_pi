@@ -90,26 +90,29 @@
         - { old: '          - seeds:', new: '          - seeds:  "{{ seeds }}"' }
         - { old: "^listen_address: localhost", new: "listen_address: {{  ansible_eth0.ipv4.address }}" }
         - { old: "^rpc_address: localhost", new: "rpc_address: {{  ansible_eth0.ipv4.address }}" }
+        - { old: "# data_file_directories", new : "data_file_directories:" }
+        - { old: "#     - /var/lib/cassandra/data", new: "     - {{ cassandra_data_directory }}"}
+        - { old: "# commitlog_directory", new: "commitlog_directory: {{ cassandra_log_directory }}"}
 
     - name: change directory permissions
       command: chown -Rf {{ cassandra_user }}:{{ cassandra_user }} {{ cassandra_home }}
       become: yes
       become_method: sudo
 
-    - name: install cassandra service
-      template: src=config/apache-cassandra dest=/etc/init.d/{{ service_name }}
-      become: yes
-      become_method: sudo
+    # - name: install cassandra service
+    #   template: src=config/apache-cassandra dest=/etc/init.d/{{ service_name }}
+    #   become: yes
+    #   become_method: sudo
 
-    - name: change permissions for cassandra service script
-      command: chmod +x /etc/init.d/{{ service_name }}
-      become: yes
-      become_method: sudo
+    # - name: change permissions for cassandra service script
+    #   command: chmod +x /etc/init.d/{{ service_name }}
+    #   become: yes
+    #   become_method: sudo
 
-    - name: set apache-cassandra service to autostart
-      service: name={{ service_name }} enabled=yes state=stopped
-      become: yes
-      become_method: sudo
+    # - name: set apache-cassandra service to autostart
+    #   service: name={{ service_name }} enabled=yes state=stopped
+    #   become: yes
+    #   become_method: sudo
 
 - hosts: nodes
   become: yes
