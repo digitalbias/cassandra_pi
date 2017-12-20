@@ -99,21 +99,6 @@
       become: yes
       become_method: sudo
 
-    # - name: install cassandra service
-    #   template: src=config/apache-cassandra dest=/etc/init.d/{{ service_name }}
-    #   become: yes
-    #   become_method: sudo
-
-    # - name: change permissions for cassandra service script
-    #   command: chmod +x /etc/init.d/{{ service_name }}
-    #   become: yes
-    #   become_method: sudo
-
-    # - name: set apache-cassandra service to autostart
-    #   service: name={{ service_name }} enabled=yes state=stopped
-    #   become: yes
-    #   become_method: sudo
-
 - hosts: nodes
   become: yes
   become_method: sudo
@@ -126,29 +111,49 @@
     - name: install {{ service_name }} service
       template: src=config/apache-cassandra dest=/etc/systemd/system/multi-user.target.wants/{{ service_name }}.service
 
-    - name: change permissions for cassandra service script
-      command: chmod +x /etc/systemd/system/multi-user.target.wants/{{ service_name }}.service
-
-    - file: path=/var/run/cassandra state=directory mode=0755 owner={{ cassandra_user }} group={{ cassandra_user }}
-    - file: path=/var/log/cassandra state=directory mode=0755 owner={{ cassandra_user }} group={{ cassandra_user }}
-    - file: path=/var/lib/cassandra state=directory mode=0755 owner={{ cassandra_user }} group={{ cassandra_user }}
-
     - name: reload systemd daemon
       command: systemctl daemon-reload
       notify:
-      - enable {{ service_name }} service
+      - enable cassandra service
 
   handlers:
-    - name: enable {{ service_name }} service
+    - name: enable cassandra service
       service: name=cassandra enabled=yes state=stopped
+
+- hosts: nodes
+  become: yes
+  become_method: sudo
+  vars:
+    cassandra: apache-cassandra-{{ cassandra_version }}
+    seeds: "{%- for host in groups.seeds -%} {{ host }} {%if not loop.last %},{%- endif -%} {%- endfor -%}"
+  tags:
+    - remove_cassandra_service
+  tasks:
+    - name: reload systemd daemon
+      command: systemctl stop cassandra
+      notify:
+      - disable cassandra service
+
+    - name: remove service
+      file:
+        state: absent
+        path: "/etc/systemd/system/multi-user.target.wants/{{ service_name }}.service"
+
+
+  handlers:
+    - name: disable cassandra service
+      command: systemctl daemon-reload
+
 
 - hosts: nodes
   gather_facts: false
   tags:
     - remove_cassandra
   tasks:
-    - name: stop apache-cassandra service
+    - name: stop cassandra service
       service: name={{ service_name }} state=stopped enabled=no
+      become: yes
+      become_method: sudo
       ignore_errors: yes
 
     - name: delete apache-cassandra service file
@@ -171,8 +176,8 @@
   tasks:
     - name: create external mount point for log and data directories
       mount:
-        path: {{ cassandra_mount_point }}
-        src: {{ external_disk }}
-        fstype: {{ file_system }}
+        path: "{{ cassandra_mount_point }}"
+        src: "{{ external_disk }}"
+        fstype: "{{ file_system }}"
         opts: default
         state: present

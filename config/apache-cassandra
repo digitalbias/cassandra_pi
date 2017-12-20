@@ -4,15 +4,14 @@ After=syslog.target network.target
 
 [Service]
 Type=forking
-WorkingDirectory=/home/cassandra
+Environment=JAVA_HOME={{ jdk_home }}
+WorkingDirectory={{ cassandra_home }}
 User={{ cassandra_user }}
+Group={{ cassandra_user }}
 PermissionsStartOnly=true
-ExecStart=
-ExecStart=/bin/sh -c '/opt/apache-cassandra/bin/cassandra -p "{{ service_pid }}" >>/var/log/{{service_name}}/system.log 2>&1'
-#ExecStart=/opt/apache-cassandra/bin/cassandra -p "{{ service_pid }}" >>/var/log/{{service_name}}/system.log 2>&1
-#RestartSec=5
-#Restart=on-failure
-PIDFile=/var/run/cassandra/pid
+ExecStart=/bin/sh -c '{{ cassandra_home }}/bin/cassandra -p "{{ service_pid }}" >>/var/log/{{service_name}}/system.log 2>&1'
+PIDFile={{ service_pid }}
+TimeoutSec=0
 
 [Install]
 WantedBy=multi-user.target

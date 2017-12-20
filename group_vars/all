@@ -18,3 +18,5 @@ cassandra_log_directory: /media/cassandra/logs
 cassandra_mount_point: /media/cassandra
 external_disk: /dev/sda1
 file_system: ext2
+
+service_pid: /var/run/cassandra.pid
